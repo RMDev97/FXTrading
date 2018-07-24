@@ -3,10 +3,10 @@ import threading
 import time
 from decimal import Decimal
 
-from ExecutionHandler import Execution
-from Portfolio import Portfolio
+from Execution.ExecutionHandler import Execution
+from Portfolio.Portfolio import Portfolio
 from Strategies.Strategy import TestStrategy
-from StreamingPriceHandler import StreamingForexPrices
+from Price.StreamingPriceHandler import StreamingForexPrices
 from settings import STREAM_DOMAIN, API_DOMAIN, ACCESS_TOKEN, ACCOUNT_ID
 
 HEARTBEAT = 0.0
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     # create the execution handler instance
     execution_handler = Execution(API_DOMAIN, ACCESS_TOKEN, ACCOUNT_ID)
 
-    portfolio = Portfolio(price_stream, events, equity=Decimal("100113.20"))
+    portfolio = Portfolio(price_stream, events, equity=Decimal("100113.20"), backtest=False)
 
     # create an instance of the Random Strategy class
     # strategy = MovingAverageCrossStrategy(pairs, events, 40, 200)

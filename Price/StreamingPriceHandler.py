@@ -3,7 +3,7 @@ import json
 from decimal import Decimal, getcontext, ROUND_HALF_DOWN
 
 from Events.TickEvent import TickEvent
-from PriceHandler import PriceHandler
+from Price.PriceHandler import PriceHandler
 
 
 class StreamingForexPrices(PriceHandler):

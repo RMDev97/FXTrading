@@ -38,3 +38,15 @@ class Execution:
                 print(json.dumps(rv, indent=2))
         else:
             pass
+
+
+class SimulatedExecution(object):
+    """
+    Provides a simulated execution handling environment. This class
+    actually does nothing - it simply receives an order to execute.
+    Instead, the Portfolio object actually provides fill handling.
+    This will be modified in later versions.
+    """
+
+    def execute_order(self, event):
+        pass
