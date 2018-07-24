@@ -1,16 +1,20 @@
+import os
 from copy import deepcopy
 from decimal import Decimal
+import pandas as pd
 
 from Events.OrderEvent import OrderEvent
-from Position import Position
+from Portfolio.Position import Position
+import settings
+from Metrics import Drawdown
 
 
 class Portfolio(object):
     def __init__(
-            self, ticker, events, home_currency="GBP",
+            self, ticker, events, backtest, home_currency="GBP",
             leverage=20, equity=Decimal("100000.00"),
-            risk_per_trade=Decimal("0.02")
-    ):
+            risk_per_trade=Decimal("0.02")):
+        self.backtest = backtest
         self.ticker = ticker
         self.events = events
         self.home_currency = home_currency
@@ -20,6 +24,9 @@ class Portfolio(object):
         self.risk_per_trade = risk_per_trade
         self.trade_units = self.calc_risk_position_size()
         self.positions = {}
+
+        if self.backtest:
+            self.backtest_file = self.create_equity_file()
 
     def calc_risk_position_size(self):
         return self.equity * self.risk_per_trade
@@ -131,3 +138,39 @@ class Portfolio(object):
             print("Portfolio Balance: %s" % self.balance)
         else:
             print("Unable to execute order as price data was insufficient.")
+
+    def output_results(self):
+        # Closes off the Backtest.csv file so it can be
+        # read via Pandas without problems
+        self.backtest_file.close()
+
+        in_filename = "backtest.csv"
+        out_filename = "equity.csv"
+        in_file = os.path.join(settings.OUTPUT_RESULTS_DIR, in_filename)
+        out_file = os.path.join(settings.OUTPUT_RESULTS_DIR, out_filename)
+
+        # Create equity curve dataframe
+        df = pd.read_csv(in_file, index_col=0)
+        df.dropna(inplace=True)
+        df["Total"] = df.sum(axis=1)
+        df["Returns"] = df["Total"].pct_change()
+        df["Equity"] = (1.0 + df["Returns"]).cumprod()
+
+        # Create drawdown statistics
+        drawdown, max_dd, dd_duration = Drawdown.create(df["Equity"])
+        df["Drawdown"] = drawdown
+        df.to_csv(out_file, index=True)
+
+        print("Simulation complete and results exported to %s" % out_filename)
+
+    def create_equity_file(self):
+        filename = "backtest.csv"
+        out_file = open(os.path.join(settings.OUTPUT_RESULTS_DIR, filename), "w")
+        header = "Timestamp,Balance"
+        for pair in self.ticker.pairs:
+            header += ",%s" % pair
+        header += "\n"
+        out_file.write(header)
+        if self.backtest:
+            print(header[:-2])
+        return out_file
